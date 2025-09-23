@@ -1,10 +1,14 @@
 
 import { GoogleGenAI, Modality } from "@google/genai";
 
-const API_KEY = process.env.API_KEY;
+// IMPORTANT FOR PRODUCTION: For security, it is highly recommended to move this key
+// to an Environment Variable in your Vercel project settings.
+// 1. In Vercel, create a variable named VITE_GEMINI_API_KEY with your key.
+// 2. Then, change this line to: const API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
+const API_KEY = "AIzaSyBCv1fMrk4M9Ll68LdlWbmR36mQZdouG0o";
 
 if (!API_KEY) {
-  throw new Error("API_KEY environment variable is not set.");
+  throw new Error("API_KEY is not set.");
 }
 
 const ai = new GoogleGenAI({ apiKey: API_KEY });
