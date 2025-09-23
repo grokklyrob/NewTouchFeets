@@ -10,6 +10,12 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Uncial+Antiqua&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    
+    <!-- Real Authentication & Payment Scripts -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <script src="https://unpkg.com/jwt-decode/build/jwt-decode.js"></script>
+    <script src="https://js.stripe.com/v3/"></script>
+
     <style>
       body {
         font-family: 'Inter', sans-serif;
@@ -59,7 +65,8 @@
     "react/": "https://aistudiocdn.com/react@^19.1.1/",
     "react": "https://aistudiocdn.com/react@^19.1.1",
     "@google/genai": "https://aistudiocdn.com/@google/genai@^1.20.0",
-    "react-dom/": "https://aistudiocdn.com/react-dom@^19.1.1/"
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.1.1/",
+    "@stripe/stripe-js": "https://aistudiocdn.com/@stripe/stripe-js@^7.9.0"
   }
 }
 </script>

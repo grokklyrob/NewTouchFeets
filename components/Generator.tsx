@@ -1,13 +1,8 @@
-
 import React, { useState, useCallback } from 'react';
-import { UserTier } from '../types';
 import { editImage, EditImageResponse } from '../services/geminiService';
 import { useQuota } from '../hooks/useQuota';
 import { UploadIcon, CrossIcon } from './icons';
-
-interface GeneratorProps {
-  userTier: UserTier;
-}
+import { useAuth } from '../context/AuthContext';
 
 const fileToB64 = (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
@@ -21,13 +16,14 @@ const fileToB64 = (file: File): Promise<string> => {
     });
 };
 
-export const Generator: React.FC<GeneratorProps> = ({ userTier }) => {
+export const Generator: React.FC = () => {
     const [imageFile, setImageFile] = useState<File | null>(null);
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
     const [generatedImageUrl, setGeneratedImageUrl] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const [error, setError] = useState<string | null>(null);
-    const { quota, decrementQuota, isReady } = useQuota();
+    const { user } = useAuth();
+    const { quota, decrementQuota, isReady } = useQuota(user);
 
     const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
@@ -48,8 +44,12 @@ export const Generator: React.FC<GeneratorProps> = ({ userTier }) => {
             setError("Please upload an image first.");
             return;
         }
-        if (userTier === 'free' && quota <= 0) {
-            setError("You have used all your free generations for this month.");
+        if (isReady && quota <= 0) {
+            if (!user) {
+                setError("You have used all your trial generations. Please sign in for more.");
+            } else {
+                setError("You have used all your free generations for this month. Please subscribe for more.");
+            }
             return;
         }
 
@@ -63,7 +63,7 @@ export const Generator: React.FC<GeneratorProps> = ({ userTier }) => {
             
             if (response.imageB64) {
                  setGeneratedImageUrl(`data:image/png;base64,${response.imageB64}`);
-                 if (userTier === 'free') {
+                 if (user?.tier !== 'paid') {
                     decrementQuota();
                  }
             } else {
@@ -75,9 +75,21 @@ export const Generator: React.FC<GeneratorProps> = ({ userTier }) => {
         } finally {
             setIsLoading(false);
         }
-    }, [imageFile, userTier, quota, decrementQuota]);
+    }, [imageFile, quota, decrementQuota, user, isReady]);
 
-    const showWatermark = userTier === 'free' && !!generatedImageUrl;
+    const showWatermark = user?.tier !== 'paid' && !!generatedImageUrl;
+
+    const renderQuotaInfo = () => {
+        if (!isReady || user?.tier === 'paid') {
+            return null;
+        }
+
+        if (user) {
+            return <p className="text-sm mt-3 text-red-400">Monthly generations left: {quota}</p>;
+        }
+
+        return <p className="text-sm mt-3 text-red-400">Free trial generations left: {quota}</p>;
+    };
 
     return (
         <section className="py-20" id="generator">
@@ -100,12 +112,12 @@ export const Generator: React.FC<GeneratorProps> = ({ userTier }) => {
                         
                         <button 
                             onClick={handleGenerate} 
-                            disabled={isLoading || !imageFile}
+                            disabled={isLoading || !imageFile || (isReady && quota <= 0)}
                             className="w-full mt-6 py-3 px-6 bg-red-800/50 text-white font-gothic text-xl tracking-wider border-2 border-red-600 rounded-lg hover:bg-red-700 hover:neon-text disabled:bg-gray-800 disabled:border-gray-700 disabled:text-gray-500 disabled:cursor-not-allowed transition-all duration-300"
                         >
                             {isLoading ? 'Generating...' : 'Sanctify'}
                         </button>
-                        {userTier === 'free' && isReady && <p className="text-sm mt-3 text-red-400">Generations left: {quota}</p>}
+                        {renderQuotaInfo()}
                     </div>
 
                     {/* Right side: Output */}
@@ -128,7 +140,7 @@ export const Generator: React.FC<GeneratorProps> = ({ userTier }) => {
                                 <img src={generatedImageUrl} alt="Generated Artwork" className="w-full h-full object-contain rounded-lg"/>
                                 {showWatermark && (
                                     <div className="absolute bottom-2 left-1/2 -translate-x-1/2 text-white/40 font-semibold text-lg pointer-events-none">
-                                        touchfeets.com
+                                        www.touchfeets.com
                                     </div>
                                 )}
                                 <div className="absolute inset-0 bg-black/70 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
